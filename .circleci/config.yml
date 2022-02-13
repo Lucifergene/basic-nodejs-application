@@ -4,7 +4,7 @@ version: 2.1
 # Orbs are reusable packages of CircleCI configuration that you may share across projects, enabling you to create encapsulated, parameterized commands, jobs, and executors that can be used across multiple projects.
 # See: https://circleci.com/docs/2.0/orb-intro/
 orbs:
-  azure-acr: circleci/azure-acr@0.2.0
+  docker: circleci/docker@2.0.2
   azure-aks: circleci/azure-aks@0.3.0
   kubernetes: circleci/kubernetes@0.4.0
 
@@ -39,11 +39,10 @@ jobs:
 workflows:
   build-and-publish-docker-image:
     jobs:
-      - azure-acr/build-and-push-image:
-          login-server-name: avikaks.azurecr.io
-          registry-name: avikaks
-          repo: hello-node
-          tag: latest
+      - docker/publish:
+          update-description: true 
+          image: $DOCKER_LOGIN/hello-node
+          tag: $CIRCLE_SHA1, latest 
       - azure-aks/create-cluster:
           cluster-name: aks-demo-deployment 
           create-resource-group: true 
@@ -52,7 +51,7 @@ workflows:
           node-count: 1 
           resource-group: aks-demo-deployment-rg
           requires:
-            - azure-acr/build-and-push-image
+            - docker/publish
       - create-deployment:
           cluster-name: aks-demo-deployment
           requires:
