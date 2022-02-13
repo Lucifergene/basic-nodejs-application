@@ -5,6 +5,34 @@ version: 2.1
 # See: https://circleci.com/docs/2.0/orb-intro/
 orbs:
   azure-acr: circleci/azure-acr@0.2.0
+  azure-aks: circleci/azure-aks@0.3.0
+  kubernetes: circleci/kubernetes@0.4.0
+
+jobs:
+  create-deployment:
+    executor: azure-aks/default
+    parameters:
+      cluster-name:
+        description: |
+          Name of the AKS cluster
+        type: string
+      resource-group:
+        description: |
+          Resource group that the cluster is in
+        type: string
+    steps:
+      - checkout
+      - azure-aks/update-kubeconfig-with-credentials:
+          cluster-name: << parameters.cluster-name >>
+          install-kubectl: true
+          perform-login: true
+          resource-group: << parameters.resource-group >>
+      - kubernetes/create-or-update-resource:
+          resource-file-path: manifests/deployment.yaml
+          resource-name: deployment/hello-node-deployment
+      - kubernetes/create-or-update-resource:
+          resource-file-path: manifests/service.yaml
+          resource-name: service/hello-node-service
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
@@ -16,4 +44,19 @@ workflows:
           registry-name: avikaks
           repo: hello-node
           tag: latest
+      - azure-aks/create-cluster:
+          cluster-name: aks-demo-deployment 
+          create-resource-group: true 
+          generate-ssh-keys: true 
+          location: eastus 
+          node-count: 1 
+          resource-group: aks-demo-deployment-rg
+          requires:
+            - azure-acr/build-and-push-image
+      - create-deployment:
+          cluster-name: aks-demo-deployment
+          requires:
+            - azure-aks/create-cluster
+          resource-group: aks-demo-deployment-rg
+
 
