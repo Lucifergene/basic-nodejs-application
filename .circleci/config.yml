@@ -42,7 +42,7 @@ workflows:
       - docker/publish:
           update-description: true 
           image: $DOCKER_LOGIN/hello-node
-          tag: $CIRCLE_SHA1, latest 
+          tag: $CIRCLE_SHA1,latest
       - azure-aks/create-cluster:
           cluster-name: aks-demo-deployment 
           create-resource-group: true 
