@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: akscluster
+  labels:
+    app: akscluster
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 1337
+  selector:
+    app: akscluster
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: akscluster
+  labels:
+    app: akscluster
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: akscluster
+  template:
+    metadata:
+      labels:
+        app: akscluster
+    spec:
+      nodeSelector:
+          "beta.kubernetes.io/os": linux
+      containers:
+        - name: hello-node
+          image: avikaks.azurecr.io/hello-node:latest
+          ports:
+            - name: http
+              containerPort: 1337
